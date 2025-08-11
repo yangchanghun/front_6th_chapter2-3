@@ -1,0 +1,13 @@
+// src/shared/ui/table/index.ts
+export { Table } from "./table"
+export { TableHeader } from "./table-header"
+export { TableBody } from "./table-body"
+export { TableRow } from "./table-row"
+export { TableHead } from "./table-head"
+export { TableCell } from "./table-cell"
+export type { TableProps } from "./table"
+export type { TableHeaderProps } from "./table-header"
+export type { TableBodyProps } from "./table-body"
+export type { TableRowProps } from "./table-row"
+export type { TableHeadProps } from "./table-head"
+export type { TableCellProps } from "./table-cell"
