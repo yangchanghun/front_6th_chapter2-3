@@ -25,7 +25,7 @@ import {
   TableRow,
   Textarea,
 } from "../shared/ui"
-
+import { useUpdateURL } from "../shared/lib/urlQuery";
 const PostsManager = () => {
   const navigate = useNavigate()
   const location = useLocation()
@@ -56,16 +56,7 @@ const PostsManager = () => {
   const [selectedUser, setSelectedUser] = useState(null)
 
   // URL 업데이트 함수
-  const updateURL = () => {
-    const params = new URLSearchParams()
-    if (skip) params.set("skip", skip.toString())
-    if (limit) params.set("limit", limit.toString())
-    if (searchQuery) params.set("search", searchQuery)
-    if (sortBy) params.set("sortBy", sortBy)
-    if (sortOrder) params.set("sortOrder", sortOrder)
-    if (selectedTag) params.set("tag", selectedTag)
-    navigate(`?${params.toString()}`)
-  }
+const updateURL = useUpdateURL();
 
   // 게시물 가져오기
   const fetchPosts = () => {
@@ -314,7 +305,7 @@ const PostsManager = () => {
     } else {
       fetchPosts()
     }
-    updateURL()
+    updateURL({ skip, limit, search: searchQuery, sortBy, sortOrder, tag: selectedTag });
   }, [skip, limit, sortBy, sortOrder, selectedTag])
 
   useEffect(() => {
@@ -373,7 +364,7 @@ const PostsManager = () => {
                       }`}
                       onClick={() => {
                         setSelectedTag(tag)
-                        updateURL()
+                        updateURL({ skip, limit, search: searchQuery, sortBy, sortOrder, tag: selectedTag });
                       }}
                     >
                       {tag}
@@ -502,7 +493,7 @@ const PostsManager = () => {
               onValueChange={(value) => {
                 setSelectedTag(value)
                 fetchPostsByTag(value)
-                updateURL()
+                updateURL({ skip, limit, search: searchQuery, sortBy, sortOrder, tag: selectedTag });
               }}
             >
               <SelectTrigger className="w-[180px]">
