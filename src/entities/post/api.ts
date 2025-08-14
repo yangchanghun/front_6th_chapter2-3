@@ -1,89 +1,74 @@
-import { http } from '../../shared/lib/http';
-import type { Post, PostListResponse } from './types';
-import type { UserBasic } from '../user/types';
+import type {
+  Post,
+  PostCreateInput,
+  PostUpdateInput,
+  PostListResponse,
+  PostSearchResponse,
+  TagItem,
+} from './types';
 
-/**
- * 기본 목록 (페이지네이션)
- */
-export function getPosts(params: { skip: number; limit: number }) {
-  const { skip, limit } = params;
-  return http<PostListResponse>(`/api/posts?limit=${limit}&skip=${skip}`);
+export async function fetchPosts(params: {
+  limit: number;
+  skip: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  tag?: string;
+}): Promise<PostListResponse> {
+  const { limit, skip, sortBy, sortOrder, tag } = params;
+
+  // 태그 필터는 별도 엔드포인트가 있으므로 여기선 기본 목록 API 사용
+  const url = new URL(`/api/posts`, window.location.origin);
+  url.searchParams.set('limit', String(limit));
+  url.searchParams.set('skip', String(skip));
+  if (sortBy && sortBy !== 'none') url.searchParams.set('sortBy', sortBy);
+  if (sortOrder) url.searchParams.set('sortOrder', sortOrder);
+
+  const res = await fetch(url.toString().replace(window.location.origin, ''));
+  if (!res.ok) throw new Error('Failed to fetch posts');
+  return res.json();
 }
 
-/**
- * 검색
- */
-export function searchPosts(q: string) {
-  const query = encodeURIComponent(q);
-  return http<PostListResponse>(`/api/posts/search?q=${query}`);
+export async function fetchPostsByTag(tag: string): Promise<PostListResponse> {
+  const res = await fetch(`/api/posts/tag/${encodeURIComponent(tag)}`);
+  if (!res.ok) throw new Error('Failed to fetch posts by tag');
+  return res.json();
 }
 
-/**
- * 태그별 목록
- */
-export function getPostsByTag(tag: string) {
-  const t = encodeURIComponent(tag);
-  return http<PostListResponse>(`/api/posts/tag/${t}`);
+export async function searchPosts(q: string): Promise<PostSearchResponse> {
+  const res = await fetch(`/api/posts/search?q=${encodeURIComponent(q)}`);
+  if (!res.ok) throw new Error('Failed to search posts');
+  return res.json();
 }
 
-/**
- * 태그 리스트
- * 서버 응답이 [{url, slug}] 형태라고 했으니 그대로 타입 없이 사용
- */
-export function getPostTags() {
-  return http<Array<{ url: string; slug: string }>>(`/api/posts/tags`);
+export async function fetchTags(): Promise<TagItem[]> {
+  const res = await fetch(`/api/posts/tags`);
+  if (!res.ok) throw new Error('Failed to fetch tags');
+  return res.json();
 }
 
-/**
- * 사용자 기본 목록 (author 붙이기 위한)
- */
-export function getUsersBasic() {
-  return http<{ users: UserBasic[] }>(`/api/users?limit=0&select=username,image`);
-}
+// ... (기존 fetchPosts, fetchPostsByTag, searchPosts, fetchTags 그대로)
 
-/**
- * 게시물 추가/수정/삭제
- */
-export function addPost(payload: { title: string; body: string; userId: number }) {
-  return http<Post>(`/api/posts/add`, {
+export async function createPost(input: PostCreateInput): Promise<Post> {
+  const res = await fetch('/api/posts/add', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(input),
   });
+  if (!res.ok) throw new Error('Failed to create post');
+  return res.json();
 }
 
-export function updatePost(id: number, payload: Partial<Post>) {
-  return http<Post>(`/api/posts/${id}`, {
+export async function updatePost(input: PostUpdateInput): Promise<Post> {
+  const res = await fetch(`/api/posts/${input.id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(input),
   });
+  if (!res.ok) throw new Error('Failed to update post');
+  return res.json();
 }
 
-export function deletePost(id: number) {
-  return http<void>(`/api/posts/${id}`, { method: 'DELETE' });
-}
-
-/**
- * 도우미: posts + author 조합
- * (페이지에서 map으로 합치던 로직을 API 레벨로 이동 — 선택)
- */
-export async function getPostsWithAuthors(params: { skip: number; limit: number }) {
-  const [postsRes, usersRes] = await Promise.all([getPosts(params), getUsersBasic()]);
-  const users = usersRes.users;
-  const posts = postsRes.posts.map((p) => ({
-    ...p,
-    author: users.find((u) => u.id === p.userId),
-  }));
-  return { posts, total: postsRes.total };
-}
-
-export async function getPostsByTagWithAuthors(tag: string) {
-  const [postsRes, usersRes] = await Promise.all([getPostsByTag(tag), getUsersBasic()]);
-  const users = usersRes.users;
-  const posts = postsRes.posts.map((p) => ({
-    ...p,
-    author: users.find((u) => u.id === p.userId),
-  }));
-  return { posts, total: postsRes.total };
+export async function deletePost(id: number): Promise<void> {
+  const res = await fetch(`/api/posts/${id}`, { method: 'DELETE' });
+  if (!res.ok) throw new Error('Failed to delete post');
 }

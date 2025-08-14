@@ -1,10 +1,13 @@
-import { http } from '../../shared/lib/http';
-import type { UserBasic, UserDetail } from './types';
+import type { UsersLiteResponse, UserLite } from './types';
 
-export function getUsersBasic() {
-  return http<{ users: UserBasic[] }>(`/api/users?limit=0&select=username,image`);
+export async function fetchUsersLite(): Promise<UsersLiteResponse> {
+  const res = await fetch(`/api/users?limit=0&select=username,image`);
+  if (!res.ok) throw new Error('Failed to fetch users');
+  return res.json();
 }
 
-export function getUserDetail(id: number) {
-  return http<UserDetail>(`/api/users/${id}`);
+export async function fetchUserDetail(id: number): Promise<UserLite> {
+  const res = await fetch(`/api/users/${id}`);
+  if (!res.ok) throw new Error('Failed to fetch user');
+  return res.json();
 }
