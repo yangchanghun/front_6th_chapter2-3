@@ -1,0 +1,55 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: pages-deploy-${{ github.ref }}
+      cancel-in-progress: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Enable corepack (ensure pnpm shim)
+        run: corepack enable
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+          run_install: false
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Add 404.html (SPA fallback)
+        run: |
+          if [ -f "dist/index.html" ]; then
+            cp dist/index.html dist/404.html
+            echo "Added 404.html for SPA routing"
+          fi
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          force_orphan: true
+          publish_branch: gh-pages
