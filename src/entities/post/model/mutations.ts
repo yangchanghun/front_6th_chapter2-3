@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createPost, deletePost, updatePost } from '../api';
 import type { Post, PostCreateInput, PostUpdateInput } from '../types';
+import { MOCK_MODE } from '../../../shared/config';
 
 export function useAddPostMutation() {
   const qc = useQueryClient();
@@ -10,10 +11,9 @@ export function useAddPostMutation() {
       await qc.cancelQueries({ queryKey: ['posts'] });
       const prev = qc.getQueriesData<any>({ queryKey: ['posts'] });
 
-      // 모든 목록 캐시 앞에 낙관적으로 추가
+      const tempId = Date.now();
       prev.forEach(([key, data]) => {
         if (!data?.posts) return;
-        const tempId = Date.now();
         qc.setQueryData(key, {
           ...data,
           posts: [
@@ -24,18 +24,38 @@ export function useAddPostMutation() {
         });
       });
 
-      return { prev };
+      return { prev, tempId };
     },
     onError: (_e, _v, ctx) => {
-      ctx?.prev?.forEach(([key, data]: any) => {
-        if (data) {
-          // 롤백
-          qc.setQueryData(key, data);
-        }
+      ctx?.prev?.forEach(([key, data]: any) => qc.setQueryData(key, data));
+    },
+    // useAddPostMutation() 안의 onSuccess 수정
+    onSuccess: (serverPost, _vars, ctx) => {
+      if (!ctx) return;
+      const { prev, tempId } = ctx as { prev: any; tempId: number };
+      prev.forEach(([key, data]: any) => {
+        if (!data?.posts) return;
+        // 🔧 temp 객체를 서버 응답으로 치환하되, 기존 필드(특히 userId)는 유지
+        qc.setQueryData(key, {
+          ...data,
+          posts: data.posts.map((p: any) =>
+            p.id === tempId
+              ? {
+                  ...p,
+                  ...serverPost,
+                  userId: p.userId,
+                  reactions: p.reactions ?? serverPost.reactions,
+                  tags: p.tags ?? serverPost.tags,
+                }
+              : p,
+          ),
+        });
       });
     },
+
     onSettled: () => {
-      qc.invalidateQueries({ queryKey: ['posts'] });
+      // MOCK_MODE면 refetch 금지(원복 방지), 실제 백엔드면 refetch로 동기화
+      if (!MOCK_MODE) qc.invalidateQueries({ queryKey: ['posts'] });
     },
   });
 }
@@ -58,11 +78,9 @@ export function useUpdatePostMutation() {
 
       return { prev };
     },
-    onError: (_e, _v, ctx) => {
-      ctx?.prev?.forEach(([key, data]: any) => qc.setQueryData(key, data));
-    },
+    onError: (_e, _v, ctx) => ctx?.prev?.forEach(([key, data]: any) => qc.setQueryData(key, data)),
     onSettled: () => {
-      qc.invalidateQueries({ queryKey: ['posts'] });
+      if (!MOCK_MODE) qc.invalidateQueries({ queryKey: ['posts'] });
     },
   });
 }
@@ -86,11 +104,9 @@ export function useDeletePostMutation() {
 
       return { prev };
     },
-    onError: (_e, _v, ctx) => {
-      ctx?.prev?.forEach(([key, data]: any) => qc.setQueryData(key, data));
-    },
+    onError: (_e, _v, ctx) => ctx?.prev?.forEach(([key, data]: any) => qc.setQueryData(key, data)),
     onSettled: () => {
-      qc.invalidateQueries({ queryKey: ['posts'] });
+      if (!MOCK_MODE) qc.invalidateQueries({ queryKey: ['posts'] });
     },
   });
 }

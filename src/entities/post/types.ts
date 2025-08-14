@@ -28,3 +28,9 @@ export type TagItem = { slug: string; url?: string } | string;
 
 export type PostCreateInput = { title: string; body: string; userId: number };
 export type PostUpdateInput = { id: number; title?: string; body?: string; userId?: number };
+
+import type { UserLite } from '../user/types';
+
+export type PostWithAuthor = Post & {
+  author?: UserLite;
+};
