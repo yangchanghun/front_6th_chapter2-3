@@ -34,7 +34,7 @@ export function useAddCommentMutation(postId: number | null) {
     },
     onSuccess: (serverComment, _vars, ctx) => {
       if (!ctx) return;
-      const { key, prev, tempId } = ctx as any;
+      const { key, tempId } = ctx as any;
       const cur = qc.getQueryData<any>(key);
       if (!cur?.comments) return;
       qc.setQueryData(key, {

@@ -5,7 +5,6 @@ import { usePostListStore } from '../../features/post-list/model/store';
 import { Highlight } from '../../shared/lib/highlight';
 import { useCommentsQuery } from '../../entities/comment/model/queries';
 import {
-  useAddCommentMutation,
   useDeleteCommentMutation,
   useLikeCommentMutation,
 } from '../../entities/comment/model/mutations';
@@ -19,7 +18,6 @@ export default function PostDetailDialog() {
   const { data: commentsData } = useCommentsQuery(postId);
 
   const { openAdd: openAddComment, openEdit: openEditComment } = useCommentEditorStore();
-  const addComment = useAddCommentMutation(postId);
   const deleteComment = useDeleteCommentMutation(postId);
   const likeComment = useLikeCommentMutation(postId);
 

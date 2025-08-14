@@ -14,7 +14,7 @@ export async function fetchPosts(params: {
   sortOrder?: 'asc' | 'desc';
   tag?: string;
 }): Promise<PostListResponse> {
-  const { limit, skip, sortBy, sortOrder, tag } = params;
+  const { limit, skip, sortBy, sortOrder } = params;
 
   // 태그 필터는 별도 엔드포인트가 있으므로 여기선 기본 목록 API 사용
   const url = new URL(`/api/posts`, window.location.origin);
