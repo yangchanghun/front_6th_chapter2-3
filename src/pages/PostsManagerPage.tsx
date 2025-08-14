@@ -13,9 +13,9 @@ import { usePostEditorStore } from '../features/post-editor/model/store';
 import PostFilters from '../features/post-list/ui/PostFilters';
 import PostTable from '../features/post-list/ui/PostTable';
 import Pagination from '../features/post-list/ui/Pagination';
-import Dialogs from '../features/post-editor/ui/Dialogs';
 
 import type { PostWithAuthor } from '../entities/post/types';
+import AllDialogs from '../widgets/dialogs/AllDialogs';
 
 export default function PostsManagerPage() {
   // URL ↔ 상태 동기화
@@ -71,7 +71,7 @@ export default function PostsManagerPage() {
       </CardContent>
 
       {/* 모든 모달(게시물/댓글/사용자) */}
-      <Dialogs />
+      <AllDialogs />
     </Card>
   );
 }
